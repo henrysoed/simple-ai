@@ -135,6 +135,44 @@ class SimpleNeuralNetwork:
             if verbose and epoch % 100 == 0:
                 print(f"Epoch {epoch}, Loss: {loss:.6f}")
     
+    def train_with_lr_schedule(self, X, y, epochs=1000, lr_decay=0.99, verbose=True):
+        """
+        Training dengan learning rate scheduling
+        Learning rate akan decay setiap epoch untuk convergence yang lebih baik
+        
+        Args:
+            X: Input data
+            y: Target data
+            epochs: Jumlah iterasi training
+            lr_decay: Factor untuk decay learning rate (0.9-0.99)
+            verbose: Print progress atau tidak
+        """
+        initial_lr = self.learning_rate
+        
+        for epoch in range(epochs):
+            # Forward propagation
+            _, y_pred = self.forward(X)
+            
+            # Compute loss
+            loss = self.compute_loss(y, y_pred)
+            self.loss_history.append(loss)
+            
+            # Backward propagation
+            dL_dW1, dL_db1, dL_dW2, dL_db2 = self.backward(X, y, y_pred)
+            
+            # Update weights using gradient descent
+            self.update_weights(dL_dW1, dL_db1, dL_dW2, dL_db2)
+            
+            # Decay learning rate
+            self.learning_rate *= lr_decay
+            
+            # Print progress
+            if verbose and epoch % 100 == 0:
+                print(f"Epoch {epoch}, Loss: {loss:.6f}, LR: {self.learning_rate:.6f}")
+        
+        # Reset learning rate
+        self.learning_rate = initial_lr
+    
     def predict(self, X):
         _, predictions = self.forward(X)
         return predictions
