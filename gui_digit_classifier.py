@@ -80,25 +80,62 @@ class DigitClassifierApp:
         self.draw_initial_bars()
 
     def preprocess_image(self, pil_image):
-        # Resize to 28x28
-        img_resized = pil_image.resize((28, 28), Image.Resampling.LANCZOS)
-        # Convert to numpy array
-        img_array = np.array(img_resized)
-        # Normalize (if your model expects this, MNIST usually does)
-        img_array = img_array.astype('float32') / 255.0
+        # Find bounding box of the drawing
+        bbox = pil_image.getbbox()
+
+        if bbox is None:
+            # No drawing, return a blank image (already normalized as zeros)
+            img_final_for_model_array = np.zeros((28, 28), dtype=np.float32)
+            # For display, a black PIL image
+            img_display_28x28 = Image.new("L", (28, 28), "black")
+        else:
+            # Crop to the bounding box
+            img_cropped = pil_image.crop(bbox)
+
+            # Resize the cropped image to fit within a target box (e.g., 20x20 or 22x22)
+            # while maintaining aspect ratio, then center it on a 28x28 canvas.
+            target_fit_size = 22  # Fit the longest dimension to 22 pixels
+            original_width, original_height = img_cropped.size
+
+            if original_width > original_height:
+                new_width_cropped = target_fit_size
+                new_height_cropped = int(original_height * (new_width_cropped / original_width))
+            else:
+                new_height_cropped = target_fit_size
+                new_width_cropped = int(original_width * (new_height_cropped / original_height))
+            
+            # Ensure dimensions are at least 1 pixel
+            new_width_cropped = max(1, new_width_cropped)
+            new_height_cropped = max(1, new_height_cropped)
+
+            img_resized_cropped = img_cropped.resize((new_width_cropped, new_height_cropped), Image.Resampling.LANCZOS)
+
+            # Create a new 28x28 black image to serve as canvas
+            img_display_28x28 = Image.new("L", (28, 28), "black")
+
+            # Calculate position to paste the resized crop to center it
+            paste_x = (28 - new_width_cropped) // 2
+            paste_y = (28 - new_height_cropped) // 2
+            img_display_28x28.paste(img_resized_cropped, (paste_x, paste_y))
+
+            # Convert the 28x28 PIL image (now with centered digit) to numpy array for the model
+            img_array = np.array(img_display_28x28)
+            # Normalize
+            img_final_for_model_array = img_array.astype('float32') / 255.0
+
         # Reshape for the model (1, 28, 28, 1) if using Conv2D or (1, 784) if Flattened
-        # Assuming model input is (None, 28, 28) or (None, 28, 28, 1) for CNN
-        # If model input is (None, 784) for a Dense layer after Flatten, reshape to (1, 28*28)
+        # This part uses img_final_for_model_array which is the normalized 28x28 numpy array
         if model.input_shape == (None, 28, 28):
-            img_processed = np.expand_dims(img_array, axis=0)
+            img_processed = np.expand_dims(img_final_for_model_array, axis=0)
         elif model.input_shape == (None, 28, 28, 1):
-            img_processed = np.expand_dims(img_array, axis=0)
+            img_processed = np.expand_dims(img_final_for_model_array, axis=0)
             img_processed = np.expand_dims(img_processed, axis=-1)
         elif model.input_shape == (None, 784):
-            img_processed = img_array.reshape(1, 28*28)
+            img_processed = img_final_for_model_array.reshape(1, 28*28)
         else:
             raise ValueError(f"Unexpected model input shape: {model.input_shape}")
-        return img_processed, img_resized
+        
+        return img_processed, img_display_28x28 # Return the processed numpy array and the 28x28 PIL image for display
 
     def check_digit(self):
         # Preprocess the drawn image
