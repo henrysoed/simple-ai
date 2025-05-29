@@ -1,0 +1,19 @@
+# Ignore virtualenv
+    .venv/
+    
+    # Ignore Python cache
+    __pycache__/
+    *.pyc
+    
+    # Ignore Git directory (Vercel handles cloning)
+    .git/
+    
+    # Ignore other common unnecessary files/folders
+    .vscode/
+    .idea/
+    *.DS_Store
+    
+    # If your model is very large and you plan to download it at runtime
+    # you might want to ignore it here too, after setting up runtime download.
+    # mnist_digit_classifier.h5
+    
