@@ -15,5 +15,4 @@
     
     # If your model is very large and you plan to download it at runtime
     # you might want to ignore it here too, after setting up runtime download.
-    # mnist_digit_classifier.h5
-    
+    mnist_digit_classifier.h5

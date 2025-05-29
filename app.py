@@ -1,13 +1,42 @@
 \
 import base64
 import io
+import os # New import
+import requests # New import
 import numpy as np
 import tensorflow as tf
 from flask import Flask, request, jsonify, render_template
 from PIL import Image, ImageDraw
 
-# Load the trained model
+# Define model path and URL
 model_path = 'mnist_digit_classifier.h5'
+MODEL_DOWNLOAD_URL = 'https://drive.google.com/uc?export=download&id=1IHCZuvxXlAP0zb6RdL0g0PEEmuJplWVn'
+
+# Function to download the model
+def download_model_if_not_exists(url, path):
+    if not os.path.exists(path):
+        print(f"Model not found at {path}, downloading from {url}...")
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status() # Raise an exception for HTTP errors
+            with open(path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            print(f"Model downloaded successfully to {path}")
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading model: {e}")
+            # Exit if model is critical and download fails
+            exit()
+        except Exception as e:
+            print(f"An unexpected error occurred during model download: {e}")
+            exit()
+    else:
+        print(f"Model found at {path}, skipping download.")
+
+# Download the model before loading
+download_model_if_not_exists(MODEL_DOWNLOAD_URL, model_path)
+
+# Load the trained model
 try:
     model = tf.keras.models.load_model(model_path)
 except OSError:
