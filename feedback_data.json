@@ -166,5 +166,12 @@
     "predicted_digit": 0,
     "correct_digit": 0,
     "is_correct": true
+  },
+  {
+    "timestamp": "2025-05-31T17:32:28.471171",
+    "image_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAAAAABXZoBIAAABHklEQVR4nGNgoDFgYVj4//fnixMtGBixS/75////r2wmmBAjXJLxvxT/f1Z1l/i/0RtxGu/x/Tw2YUYmJiZWZo53/xA2IcD//yBSiPUzTICJARWw/Avn2YImBgVMrAxBz147MKADRiYWFmYGhqgf/wMx5RhAQGHu//9tzCwY/uRQMZYyduV7mLeJ+S9MjAVKL7GWZWZg+Pvj4g+xV4xgVyOBff9h4HYIml0MDGb8P5n/M4mKaala33V9zoALXP+ogy7ExMzMzMzCwcAw8c8mVixamFgYGBRX/3+vjEWGiYFBKPfR/yu2GEEKAqrtj/7/nyGORU4vbs3P//8PBTAwMGNqu/3//+clrgwMzMgJCBZC917vWXqTgZEJHnQ0BABOJFtm2e7mmAAAAABJRU5ErkJggg==",
+    "predicted_digit": 3,
+    "correct_digit": 3,
+    "is_correct": true
   }
 ]

@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.vscode/
+.idea/
+*.h5
+*.pkl
+temp_*
+demo_*
+gui_*
+fixed_gui.py
+feedback_data.json
+FEEDBACK_FEATURES.md
+README.md

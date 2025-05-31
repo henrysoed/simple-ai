@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .demo-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .demo-card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
+        }
+        
+        .error {
+            background: #ffe6e6;
+            border-left-color: #e74c3c;
+            color: #c0392b;
+        }
+        
+        .success {
+            background: #e8f5e8;
+            border-left-color: #27ae60;
+            color: #2d5a2d;
+        }
+        
+        .info-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .activation-comparison {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .activation-result {
+            flex: 1;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Neural Network Demo</h1>
+            <p>Interactive demonstration of neural network training and prediction</p>
+        </div>
+        
+        <div class="demo-grid">
+            <!-- XOR Training Demo -->
+            <div class="demo-card">
+                <h3>🎯 XOR Problem Training</h3>
+                <div class="form-group">
+                    <label for="hidden-size">Hidden Layer Size:</label>
+                    <input type="number" id="hidden-size" value="4" min="2" max="20">
+                </div>
+                <div class="form-group">
+                    <label for="learning-rate">Learning Rate:</label>
+                    <input type="number" id="learning-rate" value="0.1" min="0.01" max="1" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="epochs">Epochs:</label>
+                    <input type="number" id="epochs" value="1000" min="100" max="2000" step="100">
+                </div>
+                <div class="form-group">
+                    <label for="activation">Activation Function:</label>
+                    <select id="activation">
+                        <option value="sigmoid">Sigmoid</option>
+                        <option value="relu">ReLU</option>
+                        <option value="tanh">Tanh</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="trainXOR()">Train Network</button>
+                <div class="loading" id="training-loading">Training neural network...</div>
+                <div class="result" id="training-result" style="display: none;"></div>
+            </div>
+            
+            <!-- Activation Comparison -->
+            <div class="demo-card">
+                <h3>⚡ Activation Function Comparison</h3>
+                <p>Compare how different activation functions perform on the XOR problem:</p>
+                <div class="form-group">
+                    <label for="compare-hidden">Hidden Layer Size:</label>
+                    <input type="number" id="compare-hidden" value="4" min="2" max="20">
+                </div>
+                <div class="form-group">
+                    <label for="compare-lr">Learning Rate:</label>
+                    <input type="number" id="compare-lr" value="0.1" min="0.01" max="1" step="0.01">
+                </div>
+                <button class="btn" onclick="compareActivations()">Compare Activations</button>
+                <div class="loading" id="compare-loading">Comparing activation functions...</div>
+                <div class="result" id="compare-result" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h3>📊 About This Demo</h3>
+            <p>This neural network implementation demonstrates:</p>
+            <ul style="margin: 15px 0; padding-left: 20px;">
+                <li><strong>Backpropagation:</strong> How neural networks learn through gradient descent</li>
+                <li><strong>XOR Problem:</strong> A classic non-linearly separable problem</li>
+                <li><strong>Activation Functions:</strong> Sigmoid, ReLU, and Tanh comparisons</li>
+                <li><strong>Real-time Training:</strong> Watch the network learn in your browser</li>
+            </ul>
+            <p><strong>XOR Truth Table:</strong></p>
+            <table style="margin: 10px 0; border-collapse: collapse;">
+                <tr><th style="border: 1px solid #ddd; padding: 8px;">Input 1</th><th style="border: 1px solid #ddd; padding: 8px;">Input 2</th><th style="border: 1px solid #ddd; padding: 8px;">Output</th></tr>
+                <tr><td style="border: 1px solid #ddd; padding: 8px;">0</td><td style="border: 1px solid #ddd; padding: 8px;">0</td><td style="border: 1px solid #ddd; padding: 8px;">0</td></tr>
+                <tr><td style="border: 1px solid #ddd; padding: 8px;">0</td><td style="border: 1px solid #ddd; padding: 8px;">1</td><td style="border: 1px solid #ddd; padding: 8px;">1</td></tr>
+                <tr><td style="border: 1px solid #ddd; padding: 8px;">1</td><td style="border: 1px solid #ddd; padding: 8px;">0</td><td style="border: 1px solid #ddd; padding: 8px;">1</td></tr>
+                <tr><td style="border: 1px solid #ddd; padding: 8px;">1</td><td style="border: 1px solid #ddd; padding: 8px;">1</td><td style="border: 1px solid #ddd; padding: 8px;">0</td></tr>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        async function trainXOR() {
+            const loadingEl = document.getElementById('training-loading');
+            const resultEl = document.getElementById('training-result');
+            
+            loadingEl.style.display = 'block';
+            resultEl.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/train_demo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        hidden_size: parseInt(document.getElementById('hidden-size').value),
+                        learning_rate: parseFloat(document.getElementById('learning-rate').value),
+                        epochs: parseInt(document.getElementById('epochs').value),
+                        activation: document.getElementById('activation').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    resultEl.className = 'result success';
+                    resultEl.innerHTML = `
+                        <h4>✅ Training Completed!</h4>
+                        <p><strong>Final Loss:</strong> ${data.final_loss.toFixed(6)}</p>
+                        <p><strong>Predictions:</strong></p>
+                        <div style="margin-top: 10px;">
+                            <div>Input [0,0] → Output: ${data.predictions[0][0].toFixed(3)} (Expected: 0)</div>
+                            <div>Input [0,1] → Output: ${data.predictions[1][0].toFixed(3)} (Expected: 1)</div>
+                            <div>Input [1,0] → Output: ${data.predictions[2][0].toFixed(3)} (Expected: 1)</div>
+                            <div>Input [1,1] → Output: ${data.predictions[3][0].toFixed(3)} (Expected: 0)</div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Training failed');
+                }
+            } catch (error) {
+                resultEl.className = 'result error';
+                resultEl.innerHTML = `<h4>❌ Error</h4><p>${error.message}</p>`;
+            }
+            
+            loadingEl.style.display = 'none';
+            resultEl.style.display = 'block';
+        }
+        
+        async function compareActivations() {
+            const loadingEl = document.getElementById('compare-loading');
+            const resultEl = document.getElementById('compare-result');
+            
+            loadingEl.style.display = 'block';
+            resultEl.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/test_activations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        hidden_size: parseInt(document.getElementById('compare-hidden').value),
+                        learning_rate: parseFloat(document.getElementById('compare-lr').value)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    resultEl.className = 'result success';
+                    let html = '<h4>🔍 Activation Function Comparison</h4><div class="activation-comparison">';
+                    
+                    for (const [activation, result] of Object.entries(data.results)) {
+                        html += `
+                            <div class="activation-result">
+                                <h5>${activation.toUpperCase()}</h5>
+                                <p>Loss: ${result.final_loss.toFixed(4)}</p>
+                                <small>
+                                    [0,0]→${result.predictions[0][0].toFixed(2)}<br>
+                                    [0,1]→${result.predictions[1][0].toFixed(2)}<br>
+                                    [1,0]→${result.predictions[2][0].toFixed(2)}<br>
+                                    [1,1]→${result.predictions[3][0].toFixed(2)}
+                                </small>
+                            </div>
+                        `;
+                    }
+                    html += '</div>';
+                    resultEl.innerHTML = html;
+                } else {
+                    throw new Error(data.error || 'Comparison failed');
+                }
+            } catch (error) {
+                resultEl.className = 'result error';
+                resultEl.innerHTML = `<h4>❌ Error</h4><p>${error.message}</p>`;
+            }
+            
+            loadingEl.style.display = 'none';
+            resultEl.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
