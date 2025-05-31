@@ -9,6 +9,13 @@ from PIL import Image, ImageDraw
 import json
 from datetime import datetime
 
+# Configure TensorFlow to use less memory
+physical_devices = tf.config.list_physical_devices('GPU')
+if physical_devices:
+    tf.config.set_visible_devices([], 'GPU')  # Disable GPU for web deployment
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
+
 # Define model path and URL
 model_path = 'mnist_digit_classifier.h5'
 MODEL_DOWNLOAD_URL = 'https://drive.google.com/uc?export=download&id=1IHCZuvxXlAP0zb6RdL0g0PEEmuJplWVn'
