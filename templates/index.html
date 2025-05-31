@@ -3,383 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digit Classifier</title>
+    <title>MNIST Digit Classifier with Feedback</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
             background-color: #f0f0f0;
         }
-        h1 {
-            color: #333;
-        }
         .container {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .canvas-container {
-            border: 2px solid #666;
-            background-color: black; /* Input canvas background */
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .drawing-area {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        canvas {
+            border: 3px solid #333;
             cursor: crosshair;
-            touch-action: none; /* Prevent scrolling on touch devices */
-        }
-        #outputCanvas {
-            border: 2px solid #666;
-            background-color: lightgrey; /* Processed canvas background */
+            background-color: black;
         }
         .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 10px;
+            text-align: center;
+            margin: 20px 0;
         }
         button {
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
+            background-color: #007bff;
             color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
         }
-        #checkButton {
-            background-color: #FFC0CB; /* Pink */
-            color: #333;
+        button:hover {
+            background-color: #0056b3;
         }
-        #clearButton {
-            background-color: #D3D3D3; /* Light grey */
-            color: #333;
+        .clear-btn {
+            background-color: #dc3545;
         }
-        #predictionText {
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+        .result {
+            text-align: center;
             margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            display: none;
+        }
+        .prediction {
             font-size: 24px;
             font-weight: bold;
-            color: #333;
+            color: #007bff;
+            margin-bottom: 15px;
         }
-        .probabilities-container {
-            margin-top: 20px;
-            width: 400px;
+        .probabilities {
+            margin-top: 15px;
         }
-        .bar-chart {
+        .prob-bar {
             display: flex;
-            align-items: flex-end;
-            height: 150px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            background-color: white;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
-        }
-        .bar-container {
-            display: flex;
-            flex-direction: column;
             align-items: center;
+            margin: 5px 0;
+        }
+        .prob-label {
+            width: 30px;
+            font-weight: bold;
+        }
+        .prob-value {
             flex-grow: 1;
+            height: 20px;
+            background-color: #e9ecef;
+            margin: 0 10px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .prob-fill {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+        }
+        .prob-percent {
+            width: 50px;
+            text-align: right;
+            font-size: 12px;
+        }
+        .feedback-section {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #28a745;
+            border-radius: 5px;
+            background-color: #f8fff8;
+        }
+        .feedback-buttons {
+            margin: 10px 0;
+        }
+        .correct-btn {
+            background-color: #28a745;
+        }
+        .correct-btn:hover {
+            background-color: #218838;
+        }
+        .incorrect-btn {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .incorrect-btn:hover {
+            background-color: #e0a800;
+        }
+        .correction-input {
+            margin: 10px 0;
+        }
+        .correction-input input {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100px;
             text-align: center;
         }
-        .bar {
-            width: 80%;
-            background-color: #D3D3D3;
-            margin: 0 2%;
-            transition: height 0.3s ease, background-color 0.3s ease;
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            text-align: center;
         }
-        .bar.predicted {
-            background-color: #4A86E8; /* Blue for predicted */
-        }
-        .bar-label {
-            font-size: 12px;
-            margin-top: 5px;
-        }
-        .bar-value {
-            font-size: 10px;
-            color: #555;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <h1>Handwritten Digit Classifier</h1>
-
     <div class="container">
-        <div>
-            <h3>Draw a digit (0-9)</h3>
-            <canvas id="inputCanvas" width="280" height="280" class="canvas-container"></canvas>
+        <h1>🧠 MNIST Digit Classifier with AI Learning</h1>
+        
+        <div class="stats" id="stats">
+            <strong>Model Statistics:</strong> Loading...
         </div>
-        <div>
-            <h3>Processed (28x28)</h3>
-            <canvas id="outputCanvas" width="280" height="280"></canvas>
+        
+        <div class="drawing-area">
+            <p>Draw a digit (0-9) on the canvas below:</p>
+            <canvas id="canvas" width="280" height="280"></canvas>
         </div>
-    </div>
-
-    <div class="controls">
-        <button id="checkButton">Check Digit</button>
-        <button id="clearButton">Clear</button>
-    </div>
-
-    <div id="predictionText">Prediction: -</div>
-
-    <div class="probabilities-container">
-        <h3>Probabilities</h3>
-        <div class="bar-chart" id="barChart">
-            <!-- Bars will be generated by JavaScript -->
+        
+        <div class="controls">
+            <button onclick="predictDigit()">Predict Digit</button>
+            <button class="clear-btn" onclick="clearCanvas()">Clear Canvas</button>
+        </div>
+        
+        <div class="result" id="result">
+            <div class="prediction" id="prediction"></div>
+            <div class="probabilities" id="probabilities"></div>
+            
+            <div class="feedback-section" id="feedbackSection">
+                <h3>Was this prediction correct?</h3>
+                <div class="feedback-buttons">
+                    <button class="correct-btn" onclick="submitFeedback(true)">✅ Correct</button>
+                    <button class="incorrect-btn" onclick="showCorrectionInput()">❌ Incorrect</button>
+                </div>
+                
+                <div class="correction-input hidden" id="correctionInput">
+                    <p>What is the correct digit?</p>
+                    <input type="number" id="correctDigit" min="0" max="9" placeholder="0-9">
+                    <button onclick="submitCorrection()">Submit Correction</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const inputCanvas = document.getElementById('inputCanvas');
-        const outputCanvas = document.getElementById('outputCanvas');
-        const inputCtx = inputCanvas.getContext('2d');
-        const outputCtx = outputCanvas.getContext('2d');
-        const checkButton = document.getElementById('checkButton');
-        const clearButton = document.getElementById('clearButton');
-        const predictionText = document.getElementById('predictionText');
-        const barChart = document.getElementById('barChart');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastPredictionData = null;
 
-        let drawing = false;
-        let lastX, lastY;
+        // Set up canvas
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 15;
+        ctx.lineCap = 'round';
 
-        // Initialize canvases
-        function initializeCanvases() {
-            inputCtx.fillStyle = 'black';
-            inputCtx.fillRect(0, 0, inputCanvas.width, inputCanvas.height);
-            outputCtx.fillStyle = 'lightgrey';
-            outputCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
-            drawInitialBars();
-        }
-        
-        function getMousePos(canvas, evt) {
+        // Load stats on page load
+        loadStats();
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect();
-            return {
-                x: evt.clientX - rect.left,
-                y: evt.clientY - rect.top
-            };
-        }
-
-        function getTouchPos(canvas, evt) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: evt.touches[0].clientX - rect.left,
-                y: evt.touches[0].clientY - rect.top
-            };
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            if (e.type === 'touchstart') {
+                isDrawing = true;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            } else if (e.type === 'touchmove' && isDrawing) {
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
         }
 
         function startDrawing(e) {
-            drawing = true;
-            const pos = e.touches ? getTouchPos(inputCanvas, e) : getMousePos(inputCanvas, e);
-            [lastX, lastY] = [pos.x, pos.y];
-            e.preventDefault(); // Prevent scrolling when drawing
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
         }
 
         function draw(e) {
-            if (!drawing) return;
-            const pos = e.touches ? getTouchPos(inputCanvas, e) : getMousePos(inputCanvas, e);
-            inputCtx.beginPath();
-            inputCtx.strokeStyle = 'white';
-            inputCtx.lineWidth = 20; // Increased for better visibility and thicker lines
-            inputCtx.lineCap = 'round';
-            inputCtx.lineJoin = 'round';
-            inputCtx.moveTo(lastX, lastY);
-            inputCtx.lineTo(pos.x, pos.y);
-            inputCtx.stroke();
-            [lastX, lastY] = [pos.x, pos.y];
-            e.preventDefault(); // Prevent scrolling when drawing
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.lineTo(x, y);
+            ctx.stroke();
         }
 
-        function stopDrawing(e) {
-            if (drawing) {
-                drawing = false;
-                // Update the processed image preview immediately after drawing stops
-                updateProcessedCanvas();
-            }
-            e.preventDefault();
+        function stopDrawing() {
+            isDrawing = false;
         }
 
-        inputCanvas.addEventListener('mousedown', startDrawing);
-        inputCanvas.addEventListener('mousemove', draw);
-        inputCanvas.addEventListener('mouseup', stopDrawing);
-        inputCanvas.addEventListener('mouseout', stopDrawing); // Stop if mouse leaves canvas
+        function clearCanvas() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('result').style.display = 'none';
+            lastPredictionData = null;
+        }
 
-        // Touch events
-        inputCanvas.addEventListener('touchstart', startDrawing);
-        inputCanvas.addEventListener('touchmove', draw);
-        inputCanvas.addEventListener('touchend', stopDrawing);
-        inputCanvas.addEventListener('touchcancel', stopDrawing);
-
-
-        function updateProcessedCanvas() {
-            // Create a temporary 28x28 canvas to draw the scaled down image
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = 28;
-            tempCanvas.height = 28;
-            const tempCtx = tempCanvas.getContext('2d');
-
-            // Get bounding box of the drawing on the input canvas
-            const imgData = inputCtx.getImageData(0, 0, inputCanvas.width, inputCanvas.height);
-            const data = imgData.data;
-            let minX = inputCanvas.width, minY = inputCanvas.height, maxX = 0, maxY = 0;
-            let foundPixel = false;
-
-            for (let y = 0; y < inputCanvas.height; y++) {
-                for (let x = 0; x < inputCanvas.width; x++) {
-                    const alpha = data[(y * inputCanvas.width + x) * 4 + 3]; // Check alpha or any color channel if non-transparent
-                    const r = data[(y * inputCanvas.width + x) * 4];
-                    if (r > 0) { // Assuming white on black, so check red channel
-                        minX = Math.min(minX, x);
-                        minY = Math.min(minY, y);
-                        maxX = Math.max(maxX, x);
-                        maxY = Math.max(maxY, y);
-                        foundPixel = true;
-                    }
-                }
-            }
-
-            if (!foundPixel) {
-                outputCtx.fillStyle = 'lightgrey';
-                outputCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
-                return; // Nothing drawn
-            }
-
-            const boundingWidth = maxX - minX;
-            const boundingHeight = maxY - minY;
-
-            if (boundingWidth <= 0 || boundingHeight <= 0) {
-                 outputCtx.fillStyle = 'lightgrey';
-                outputCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
-                return; // No valid bounding box
-            }
+        async function predictDigit() {
+            const imageData = canvas.toDataURL();
             
-            const targetFitSize = 22; // Fit into 22x22 box
-            let newWidth, newHeight;
-
-            if (boundingWidth > boundingHeight) {
-                newWidth = targetFitSize;
-                newHeight = Math.max(1, Math.round(boundingHeight * (newWidth / boundingWidth)));
-            } else {
-                newHeight = targetFitSize;
-                newWidth = Math.max(1, Math.round(boundingWidth * (newHeight / boundingHeight)));
-            }
-
-            // Create a canvas for the cropped image
-            const cropCanvas = document.createElement('canvas');
-            cropCanvas.width = boundingWidth;
-            cropCanvas.height = boundingHeight;
-            const cropCtx = cropCanvas.getContext('2d');
-            cropCtx.drawImage(inputCanvas, minX, minY, boundingWidth, boundingHeight, 0, 0, boundingWidth, boundingHeight);
-            
-            // Create a canvas for the resized cropped image
-            const resizedCropCanvas = document.createElement('canvas');
-            resizedCropCanvas.width = newWidth;
-            resizedCropCanvas.height = newHeight;
-            const resizedCropCtx = resizedCropCanvas.getContext('2d');
-            resizedCropCtx.drawImage(cropCanvas, 0, 0, boundingWidth, boundingHeight, 0, 0, newWidth, newHeight);
-
-            // Paste onto the 28x28 temp canvas (centered)
-            tempCtx.fillStyle = 'black';
-            tempCtx.fillRect(0, 0, 28, 28);
-            const pasteX = Math.floor((28 - newWidth) / 2);
-            const pasteY = Math.floor((28 - newHeight) / 2);
-            tempCtx.drawImage(resizedCropCanvas, pasteX, pasteY);
-
-            // Display this 28x28 image on the outputCanvas (scaled up)
-            outputCtx.imageSmoothingEnabled = false; // Use nearest neighbor for pixel art
-            outputCtx.fillStyle = 'lightgrey';
-            outputCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
-            outputCtx.drawImage(tempCanvas, 0, 0, 28, 28, 0, 0, outputCanvas.width, outputCanvas.height);
-        }
-
-
-        clearButton.addEventListener('click', () => {
-            initializeCanvases();
-            predictionText.textContent = 'Prediction: -';
-        });
-
-        checkButton.addEventListener('click', async () => {
-            // The preprocessing for the model is done on the server from the raw 280x280 image.
-            // The client-side processed image is just for display.
-            const imageDataURL = inputCanvas.toDataURL('image/png');
-            updateProcessedCanvas(); // Ensure processed view is up-to-date
-
             try {
                 const response = await fetch('/predict', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ image: imageDataURL }),
+                    body: JSON.stringify({ image: imageData })
                 });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-                }
+                
                 const data = await response.json();
-                predictionText.textContent = `Prediction: ${data.prediction}`;
-                updateProbabilityBars(data.probabilities, data.prediction);
-            } catch (error) {
-                console.error('Error during prediction:', error);
-                predictionText.textContent = `Error: ${error.message}`;
-                drawInitialBars(); // Reset bars on error
-            }
-        });
-
-        function drawInitialBars() {
-            barChart.innerHTML = ''; // Clear existing bars
-            for (let i = 0; i < 10; i++) {
-                const barContainer = document.createElement('div');
-                barContainer.className = 'bar-container';
                 
-                const barValue = document.createElement('div');
-                barValue.className = 'bar-value';
-                barValue.textContent = (0.0).toFixed(2);
-
-                const bar = document.createElement('div');
-                bar.className = 'bar';
-                bar.style.height = '1px'; // Minimal height for empty bar
-
-                const barLabel = document.createElement('div');
-                barLabel.className = 'bar-label';
-                barLabel.textContent = i;
-
-                barContainer.appendChild(barValue);
-                barContainer.appendChild(bar);
-                barContainer.appendChild(barLabel);
-                barChart.appendChild(barContainer);
-            }
-        }
-
-        function updateProbabilityBars(probabilities, predictedDigit) {
-            barChart.innerHTML = ''; // Clear existing bars
-            const maxProb = Math.max(...probabilities);
-
-            for (let i = 0; i < 10; i++) {
-                const prob = probabilities[i];
-                const barContainer = document.createElement('div');
-                barContainer.className = 'bar-container';
-
-                const barValue = document.createElement('div');
-                barValue.className = 'bar-value';
-                barValue.textContent = prob.toFixed(2);
-                
-                const bar = document.createElement('div');
-                bar.className = 'bar';
-                bar.style.height = `${Math.max(1, (prob / 1.0) * 100)}%`; // Ensure at least 1px height
-                if (i === predictedDigit) {
-                    bar.classList.add('predicted');
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
                 }
-
-                const barLabel = document.createElement('div');
-                barLabel.className = 'bar-label';
-                barLabel.textContent = i;
-
-                barContainer.appendChild(barValue);
-                barContainer.appendChild(bar);
-                barContainer.appendChild(barLabel);
-                barChart.appendChild(barContainer);
+                
+                lastPredictionData = data;
+                displayResult(data);
+                
+            } catch (error) {
+                alert('Error connecting to server: ' + error.message);
             }
         }
 
-        // Initialize
-        initializeCanvases();
+        function displayResult(data) {
+            document.getElementById('prediction').textContent = `Predicted Digit: ${data.prediction}`;
+            
+            const probsDiv = document.getElementById('probabilities');
+            probsDiv.innerHTML = '<h4>Probability Distribution:</h4>';
+            
+            data.probabilities.forEach((prob, index) => {
+                const probBar = document.createElement('div');
+                probBar.className = 'prob-bar';
+                probBar.innerHTML = `
+                    <div class="prob-label">${index}:</div>
+                    <div class="prob-value">
+                        <div class="prob-fill" style="width: ${prob * 100}%"></div>
+                    </div>
+                    <div class="prob-percent">${(prob * 100).toFixed(1)}%</div>
+                `;
+                probsDiv.appendChild(probBar);
+            });
+            
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('feedbackSection').style.display = 'block';
+            document.getElementById('correctionInput').classList.add('hidden');
+        }
+
+        function showCorrectionInput() {
+            document.getElementById('correctionInput').classList.remove('hidden');
+        }
+
+        async function submitFeedback(isCorrect) {
+            if (!lastPredictionData) return;
+            
+            const feedbackData = {
+                image_data: lastPredictionData.image_data,
+                predicted_digit: lastPredictionData.prediction,
+                is_correct: isCorrect,
+                correct_digit: lastPredictionData.prediction
+            };
+            
+            await sendFeedback(feedbackData);
+        }
+
+        async function submitCorrection() {
+            const correctDigit = document.getElementById('correctDigit').value;
+            
+            if (correctDigit === '' || correctDigit < 0 || correctDigit > 9) {
+                alert('Please enter a valid digit (0-9)');
+                return;
+            }
+            
+            if (!lastPredictionData) return;
+            
+            const feedbackData = {
+                image_data: lastPredictionData.image_data,
+                predicted_digit: lastPredictionData.prediction,
+                is_correct: false,
+                correct_digit: parseInt(correctDigit)
+            };
+            
+            await sendFeedback(feedbackData);
+        }
+
+        async function sendFeedback(feedbackData) {
+            try {
+                const response = await fetch('/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(feedbackData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    alert('Error sending feedback: ' + result.error);
+                } else {
+                    alert('Thank you for your feedback! The AI is learning from your input.');
+                    document.getElementById('feedbackSection').style.display = 'none';
+                    loadStats(); // Refresh stats
+                }
+                
+            } catch (error) {
+                alert('Error sending feedback: ' + error.message);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/stats');
+                const stats = await response.json();
+                
+                document.getElementById('stats').innerHTML = `
+                    <strong>Model Statistics:</strong> 
+                    Total Feedback: ${stats.total_feedback} | 
+                    Correct Predictions: ${stats.correct_predictions} | 
+                    Accuracy: ${stats.accuracy}%
+                `;
+                
+            } catch (error) {
+                document.getElementById('stats').innerHTML = '<strong>Model Statistics:</strong> Unable to load';
+            }
+        }
     </script>
 </body>
 </html>

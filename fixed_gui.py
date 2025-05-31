@@ -7,8 +7,7 @@ import json
 import datetime
 import base64
 import io
-# Import the fixed retrain function
-from temp_retrain_function import fixed_retrain_with_feedback
+import os
 
 # Load the trained model
 model_path = 'mnist_digit_classifier.h5'
@@ -79,17 +78,21 @@ class DigitClassifierApp:
         # Feedback statistics label
         self.stats_label = Label(root_window, text="", font=("Arial", 10), fg="gray")
         self.stats_label.grid(row=7, column=0, columnspan=2, pady=5)
-        self.update_feedback_stats()        # Bar Chart for Probabilities
+        
+        # Bar Chart for Probabilities
         self.prob_canvas_height = 150
         self.prob_canvas_width = 400
         self.prob_canvas = Canvas(root_window, width=self.prob_canvas_width, height=self.prob_canvas_height, bg='white', highlightthickness=1, highlightbackground="grey")
         self.prob_canvas.grid(row=6, column=0, columnspan=2, pady=10)
-        self.draw_initial_bars()
         
         # Variables to store current prediction data
         self.current_predicted_digit = None
         self.current_processed_input = None
         self.current_display_img = None
+        
+        # Initialize UI elements
+        self.draw_initial_bars()
+        self.update_feedback_stats()
 
     def paint(self, event):
         if self.last_x and self.last_y:
@@ -104,18 +107,22 @@ class DigitClassifierApp:
         self.canvas_input.delete("all")
         self.draw_input.rectangle([0, 0, 280, 280], fill="black") # Clear PIL image
         self.last_x, self.last_y = None, None
+        
         # Clear processed image
         self.canvas_processed_pil = Image.new("L", (280, 280), "lightgrey")
         self.canvas_processed_tk = ImageTk.PhotoImage(self.canvas_processed_pil)
         self.canvas_processed_display.configure(image=self.canvas_processed_tk)
         self.canvas_processed_display.image = self.canvas_processed_tk # Keep a reference
+        
         # Clear prediction and bars
         self.prediction_label_text.config(text="Prediction:")
         self.draw_initial_bars()
+        
         # Reset feedback buttons and status
         self.btn_correct.config(state=tk.DISABLED)
         self.btn_wrong.config(state=tk.DISABLED)
         self.feedback_status.config(text="")
+        
         # Clear current prediction data
         self.current_predicted_digit = None
         self.current_processed_input = None
@@ -214,7 +221,6 @@ class DigitClassifierApp:
         self.feedback_status.config(text="✓ Feedback saved: Prediction was correct!", fg="green")
         self.btn_correct.config(state=tk.DISABLED)
         self.btn_wrong.config(state=tk.DISABLED)
-        self.update_feedback_stats()
 
     def feedback_wrong(self):
         """Handle wrong prediction feedback"""
@@ -233,8 +239,7 @@ class DigitClassifierApp:
         
         self.btn_correct.config(state=tk.DISABLED)
         self.btn_wrong.config(state=tk.DISABLED)
-        self.update_feedback_stats()
-            
+
     def save_feedback(self, predicted_digit, correct_digit, is_correct):
         """Save feedback data to JSON file"""
         try:
@@ -276,12 +281,142 @@ class DigitClassifierApp:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save feedback: {str(e)}")
             print(f"Error saving feedback: {e}")
-            
+
     def retrain_with_feedback(self):
-        """Retrain the model using feedback data by calling the fixed function"""
-        # Simply call the fixed function that handles all the edge cases correctly
-        global model  # Use the global model variable
-        fixed_retrain_with_feedback(model, self.feedback_status, self.root)
+        """Retrain the model using feedback data"""
+        try:
+            # Load feedback data
+            try:
+                with open('feedback_data.json', 'r') as f:
+                    feedback_data = json.load(f)
+            except FileNotFoundError:
+                messagebox.showerror("Error", "No feedback data found. Please provide feedback first.")
+                return
+            
+            if len(feedback_data) == 0:
+                messagebox.showinfo("Info", "No feedback data available for retraining.")
+                return
+            
+            # Show progress dialog
+            self.feedback_status.config(text="Loading feedback data for retraining...", fg="blue")
+            self.root.update()
+            
+            # Prepare training data from feedback
+            X_feedback = []
+            y_feedback = []
+            
+            # Determine target shape based on model input
+            if len(model.input_shape) < 2:
+                messagebox.showerror("Error", f"Unexpected model input shape: {model.input_shape}")
+                return
+                
+            if model.input_shape[1:] == (28, 28):
+                target_shape = (28, 28)
+                reshape_func = lambda x: x
+            elif model.input_shape[1:] == (28, 28, 1):
+                target_shape = (28, 28, 1)
+                reshape_func = lambda x: np.expand_dims(x, axis=-1)
+            elif model.input_shape[1:] == (784,):
+                target_shape = (784,)
+                reshape_func = lambda x: x.reshape(784)
+            else:
+                messagebox.showerror("Error", f"Unsupported model input shape: {model.input_shape}")
+                return
+            
+            print(f"Target shape for training: {target_shape}")
+            
+            for entry in feedback_data:
+                try:
+                    # Decode base64 image
+                    img_data = entry['image_data'].split(',')[1]  # Remove data:image/png;base64,
+                    img_bytes = base64.b64decode(img_data)
+                    img = Image.open(io.BytesIO(img_bytes))
+                    
+                    # Ensure image is grayscale and exactly 28x28
+                    if img.mode != 'L':
+                        img = img.convert('L')
+                    
+                    # Resize to exactly 28x28
+                    img = img.resize((28, 28), Image.Resampling.LANCZOS)
+                    
+                    # Convert to numpy array and normalize
+                    img_array = np.array(img).astype('float32') / 255.0
+                    
+                    # Apply the appropriate reshape function based on model requirements
+                    img_processed = reshape_func(img_array)
+                    
+                    # Debug info
+                    if len(X_feedback) == 0:
+                        print(f"First processed image shape: {img_processed.shape}")
+                    
+                    X_feedback.append(img_processed)
+                    y_feedback.append(entry['correct_digit'])
+                    
+                except Exception as e:
+                    print(f"Error processing feedback entry: {str(e)}")
+                    continue
+            
+            if len(X_feedback) == 0:
+                messagebox.showerror("Error", "No valid feedback data found for retraining.")
+                return
+            
+            # Convert to numpy arrays with consistent shape using stack
+            try:
+                X_feedback_array = np.stack(X_feedback)
+                y_feedback_array = np.array(y_feedback)
+                
+                # Print final shape for debugging
+                print(f"Final X_feedback shape: {X_feedback_array.shape}")
+                
+                # Convert labels to one-hot encoding
+                y_feedback_onehot = tf.keras.utils.to_categorical(y_feedback_array, 10)
+                
+                self.feedback_status.config(text=f"Retraining with {len(X_feedback)} feedback samples...", fg="blue")
+                self.root.update()
+                
+                # Fine-tune the model with feedback data
+                # Use a lower learning rate for fine-tuning
+                model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                            loss='categorical_crossentropy',
+                            metrics=['accuracy'])
+                
+                # Train for a few epochs with the feedback data
+                batch_size = min(32, len(X_feedback))
+                if batch_size < 1:
+                    batch_size = 1  # Ensure at least batch size of 1
+                    
+                print(f"Training model with input shape {X_feedback_array.shape} and labels shape {y_feedback_onehot.shape}")
+                print(f"Using batch size: {batch_size}")
+                
+                history = model.fit(X_feedback_array, y_feedback_onehot, 
+                                epochs=5, 
+                                batch_size=batch_size,
+                                verbose=1)  # Set to 1 to show training progress
+                                
+                # Save the updated model
+                model.save('mnist_digit_classifier.h5')
+                
+                # Show completion message
+                final_accuracy = history.history['accuracy'][-1]
+                self.feedback_status.config(
+                    text=f"✓ AI retrained successfully! Final accuracy: {final_accuracy:.3f}", 
+                    fg="green"
+                )
+                
+                messagebox.showinfo("Success", 
+                                f"AI has been retrained with {len(X_feedback)} feedback samples!\n"
+                                f"Final training accuracy: {final_accuracy:.3f}\n"
+                                f"Model saved to mnist_digit_classifier.h5")
+                
+            except Exception as e:
+                print(f"Error during array conversion or training: {e}")
+                messagebox.showerror("Training Error", f"Error in training process: {str(e)}")
+                self.feedback_status.config(text="Training failed", fg="red")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to retrain model: {str(e)}")
+            self.feedback_status.config(text="Retraining failed", fg="red")
+            print(f"Error retraining model: {e}")
 
     def draw_initial_bars(self):
         self.prob_canvas.delete("all")
