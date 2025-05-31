@@ -1,8 +1,14 @@
-# Simple Neural Network dengan Backpropagation
+# Project Simple AI: Neural Network & Digit Classifier
 
-Implementasi neural network sederhana dari scratch menggunakan Python dan NumPy. Neural network ini menggunakan backpropagation dan gradient descent untuk learning.
+Project ini terdiri dari dua bagian utama:
+1. **Implementasi Neural Network dari Scratch** - Neural network dengan backpropagation
+2. **Digit Classifier dengan TensorFlow** - GUI untuk klasifikasi digit tulisan tangan
 
-## Fitur Utama
+## 1. Neural Network dari Scratch
+
+Implementasi neural network sederhana menggunakan Python dan NumPy. Neural network ini menggunakan backpropagation dan gradient descent untuk learning.
+
+### Fitur Neural Network
 
 - **Forward Propagation**: Perhitungan output dari input melalui hidden layer
 - **Backpropagation**: Menghitung gradients menggunakan chain rule
@@ -11,12 +17,9 @@ Implementasi neural network sederhana dari scratch menggunakan Python dan NumPy.
 - **Learning Rate Scheduling**: Adaptive learning rate untuk better convergence
 - **Xavier Initialization**: Inisialisasi weights yang baik untuk training
 
-## Struktur Neural Network
+## 2. Digit Classifier dengan GUI
 
-```
-Input Layer -> Hidden Layer -> Output Layer
-     2              4-10           1
-```
+Aplikasi desktop dengan Tkinter untuk klasifikasi digit tulisan tangan menggunakan model MNIST yang dilatih dengan TensorFlow.
 
 ## Komponen Penting
 
