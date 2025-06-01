@@ -173,5 +173,19 @@
     "predicted_digit": 3,
     "correct_digit": 3,
     "is_correct": true
+  },
+  {
+    "timestamp": "2025-06-01T22:28:53.650633",
+    "image_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAAAAABXZoBIAAABVElEQVR4nLWRv0tCURTHv/fe90LDCBNyqKFoCBsqGgqiKSIa/B/agnANIoKGEGxscAyCoEWUhjcYEVJBLS4a/RiiwIiCsJKnQiS+E8/3nnRvs9/pcD7ce77ne4COSiC8V8glokGE4iNMZhyjD/RlNuh1M0Zx9eV8+XnaHxiOHlHi416Xme+yMuRUs8HS96QMY9UF6IxxwcHzP2syLN4y7lQacnTadtLSWAGuRQscUzKshoncDgiPMsyMh8gthYU8JEXMFDSbcg3njTkZYofWAaEJYMV86ZaZEAbt9gIYTBKpITDm36d6eitl0fb1u1C+ZcCiUSEyZnB2owQP2CEEJvqBrrcTr6e1tyNBtSIEdK38DwJNMG4BPT4vAy8EZypZnDWX+bE6srWPbWSVklDdOgP6lrKU9jPVrcDBXSZXp9qG7t3njyH2ORApXVwdPoG179Mh/QJJk2gB1cYz3gAAAABJRU5ErkJggg==",
+    "predicted_digit": 8,
+    "correct_digit": 9,
+    "is_correct": false
+  },
+  {
+    "timestamp": "2025-06-01T22:29:06.760115",
+    "image_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAAAAABXZoBIAAABLElEQVR4nGNgoAlghFDMfxkCoux4X7x8cfLEof+M/5GVMDGYL3r2HwL+TJVlYELRWdTK8ab36jsxERkFW8UNkT+RtUb+/D9bAsoWPfh/IguysY13CxgYmJmZWVhY2Bi8/l8SQHGXKAMT1B5mhryvLbhcz8hx9rsPVh8xMDAzWL24yM+IQyPXhd9ZDMxYJZkZ3H69EGTErpOJcd2fElwamRyevJFkhDocFlAw3j9n6VnPGf9h08jCEHbnhTpcI5pcxM//BVhtZGRhyPz7fzYnMxanMjMxJPz/X87AxMTEzIIqz8zEwND1/2UmmmFQVzJ4ldn/frqPk1GE5fP7u31fkNW47YGmAwhIgrkQBGTrrL88ffP+3neGD18Yf8rybUGW/Lrvd8Gt79i8RwsAAIqhbB6SeyfvAAAAAElFTkSuQmCC",
+    "predicted_digit": 2,
+    "correct_digit": 2,
+    "is_correct": true
   }
 ]
